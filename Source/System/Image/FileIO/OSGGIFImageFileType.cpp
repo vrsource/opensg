@@ -122,6 +122,8 @@ typedef struct  GIFData
             unsigned char   cmapData[GIF_MAXCOLORS][3];
             unsigned char   *data;
             int             interlaced;
+            bool            hasColorTable;
+            bool            sort;
         } image;
         struct
         {
@@ -151,6 +153,8 @@ typedef struct
 
     int             background;
     int             aspectRatio;
+    bool            sort; // Global table ordered by decreasing importance, most important color first.
+    bool            hasGlobalColorTable;
 
     GIFData         *data;
 } GIFStream;
@@ -211,6 +215,10 @@ bool GIFImageFileType::read(      Image        *OSG_GIF_ARG(pImage),
     int                 colorMapSize;
     Time                frameDelay;
 
+    bool hasColor = false;
+    bool hasTransparency = false;
+    GIFDisposalType last_frame_disposal = gif_no_disposal;
+
     if(gifStream)
     {
         frameCount = 0;
@@ -231,6 +239,18 @@ bool GIFImageFileType::read(      Image        *OSG_GIF_ARG(pImage),
         streamWidth  = gifStream->width;
         streamHeight = gifStream->height;
 
+        // Calculate the background color based on the global color map.
+        unsigned char bg_color[4] = {0, 0, 0, 255};
+        if (gifStream->background >= 0)
+        {
+            OSG_ASSERT(gifStream->hasGlobalColorTable);
+            Int32 bgindex = gifStream->background;
+            bg_color[0] = gifStream->cmapData[bgindex][0];
+            bg_color[1] = gifStream->cmapData[bgindex][1];
+            bg_color[2] = gifStream->cmapData[bgindex][2];
+            bg_color[3] = 255;
+        }
+
         for(gifData = gifStream->data; gifData; gifData = gifData->next)
         {
             switch(gifData->type)
@@ -249,10 +269,8 @@ bool GIFImageFileType::read(      Image        *OSG_GIF_ARG(pImage),
                     curHeight = gifData->height;
                     xOff      = gifData->x;
                     yOff      = gifData->y;
-                    
-                    // check if the movie is color or greyscale
-                    isColor = false;
-                    if(gifData->data.image.cmapSize > 0)
+
+                    if(gifData->data.image.hasColorTable)
                     {
                         colorMapSize = gifData->data.image.cmapSize;
                         colorMap = 
@@ -261,7 +279,7 @@ bool GIFImageFileType::read(      Image        *OSG_GIF_ARG(pImage),
                         
                         // cout << "INFO: Use gifData colorMap" << endl;
                     }
-                    else if(gifStream->cmapSize > 0)
+                    else if(gifStream->hasGlobalColorTable)
                     {
                         colorMapSize = gifStream->cmapSize;
                         colorMap = 
@@ -276,27 +294,32 @@ bool GIFImageFileType::read(      Image        *OSG_GIF_ARG(pImage),
                                   "GIFImageFileType::read()\n"));
                         colorMapSize = 0;
                     }
-                    
-                    for(i = 0; i < colorMapSize; i++)
-                    {
-                        if(i != transparentIndex)
-                        {
-                            red   = colorMap[i * 3 + 0];
-                            green = colorMap[i * 3 + 1];
-                            blue  = colorMap[i * 3 + 2];
 
-                            if(red != green || red != blue)
+                    // Keep track if we have transparency for any images.
+                    hasTransparency = hasTransparency || (transparentIndex >= 0);
+
+                    // check if the movie is color or greyscale
+                    if(!hasColor)
+                    {
+                        for(i = 0; i < colorMapSize; i++)
+                        {
+                            if(i != transparentIndex)
                             {
-                                isColor = true;
-                                break;
+                                red   = colorMap[i * 3 + 0];
+                                green = colorMap[i * 3 + 1];
+                                blue  = colorMap[i * 3 + 2];
+
+                                if(red != green || red != blue)
+                                {
+                                    hasColor = true;
+                                    break;
+                                }
                             }
                         }
                     }
-                    
-                    // calculate the movie channel
-                    channel = 
-                        (isColor ? 3 : 1) + (transparentIndex >= 0 ? 1 : 0);
-                    
+
+                    // NOTE: Always start with four BPP and convert to a different format
+                    //       if needed otherwise. This is to avoid looking up the colors twice.
                     if(currentFrame)
                     {
                         // is not the first frame
@@ -309,57 +332,51 @@ bool GIFImageFileType::read(      Image        *OSG_GIF_ARG(pImage),
                         else
                         {
                             destData = pImage->editData(0, currentFrame);
-                            
-                            // This is probably wrong, but it's a start
-                            switch(gifData->info.disposal)
+
+                            switch(last_frame_disposal)
                             {
                                 case gif_no_disposal:
                                     break;
                                     
                                 case gif_keep_disposal:
-                                    memcpy(destData, 
-                                           pImage->getData(0, 
-                                                           currentFrame - 1), 
-                                           pImage->getWidth () * 
-                                           pImage->getHeight() * 
-                                           channel);
+                                    // The last frame should have kept it's image active.
+                                    memcpy(destData,
+                                           pImage->getData(0, currentFrame - 1),
+                                           pImage->getWidth () *
+                                           pImage->getHeight() *
+                                           4);
                                     break;
                                     
                                 case gif_color_restore:
                                 {
-                                    unsigned char r,g,b,a;
-                                    Int32 bgindex = gifStream->background;
+                                    // The last frame should have reset to the background color.
+                                    // NOTE: Strictly speaking we should only be reseting the
+                                    //       region that was modified in the last frame.
                                     unsigned char *d = destData;
-                                    
-                                    r = colorMap[bgindex * 3 + 0];
-                                    g = colorMap[bgindex * 3 + 1];
-                                    b = colorMap[bgindex * 3 + 2];
-                                    a = (bgindex == transparentIndex) ? 
-                                        0 : 255;
-                                    
-                                    for(UInt32 pixel = 
-                                            pImage->getWidth () * 
-                                            pImage->getHeight(); 
-                                        pixel > 0; --pixel, d += channel)
+                                    for(UInt32 pixel =
+                                            pImage->getWidth () *
+                                            pImage->getHeight();
+                                        pixel > 0; --pixel, d += 4)
                                     {
-                                        d[0] = r;
-                                        d[1] = g;
-                                        d[2] = b;
-                                        if(channel == 4)
-                                            d[3] = a;
+                                        d[0] = bg_color[0];
+                                        d[1] = bg_color[1];
+                                        d[2] = bg_color[2];
+                                        d[3] = bg_color[3];
                                     }
                                 }
                                 break;
-                                
-                                case gif_image_restore:                       
-                                    memcpy(destData, 
-                                           pImage->getData(
-                                               0, 
-                                               (currentFrame >= 2) ?
-                                                   (currentFrame - 2) : 0),
-                                           pImage->getWidth () * 
-                                           pImage->getHeight() * 
-                                           channel);
+
+                                case gif_image_restore:
+                                    // The last frame should have reverted back to
+                                    // it's previous frame after rendering.
+                                    // NOTE: Strictly speaking we should only be resoring the
+                                    //       region that was modified in the last frame.
+                                    memcpy(destData,
+                                           pImage->getData(0, (currentFrame >= 2) ?
+                                                           (currentFrame - 2) : 0),
+                                           pImage->getWidth () *
+                                           pImage->getHeight() *
+                                           4);
                                     break;
                                 default:
                                     FWARNING(("Unknown GIF disposal "
@@ -371,129 +388,53 @@ bool GIFImageFileType::read(      Image        *OSG_GIF_ARG(pImage),
                     }
                     else
                     {
-                        switch(channel)
-                        {
-                            case 1:
-                                pixelFormat = Image::OSG_L_PF;
-                                break;
-                            case 2:
-                                pixelFormat = Image::OSG_LA_PF;
-                                break;
-                            case 3:
-                                pixelFormat = Image::OSG_RGB_PF;
-                                break;
-                            case 4:
-                                pixelFormat = Image::OSG_RGBA_PF;
-                                break;
-                        };
-                        pImage->set(pixelFormat, 
-                                    streamWidth, 
-                                    streamHeight, 
-                                    1, 1, 
+                        pImage->set(Image::OSG_RGBA_PF,
+                                    streamWidth,
+                                    streamHeight,
+                                    1, 1,
                                     frameCount, frameDelay);
 
                         destData = pImage->editData();
                     }
-                    
+
+                    // Keep track of what the last frame should have done for disposal.
+                    last_frame_disposal = gifData->info.disposal;
+
                     // copy the image data
-                    lineSize = pImage->getWidth() * channel;
-                    lineEnd  = curWidth * channel + xOff * channel;
+                    lineSize = pImage->getWidth() * 4;
+                    lineEnd  = curWidth * 4 + xOff * 4;
                     srcData  = gifData->data.image.data;
                     destData = 
                         destData + ((pImage->getHeight() - yOff - 1)*lineSize);
 
-                    switch(channel)
+                    destI = xOff * 4;
+
+                    for(i = curWidth * curHeight; i--;)
                     {
-                        case 1: // Greyscale without Alpha
-                            destI = 0;
-                            for(i = curWidth * curHeight; i--;)
-                            {
-                                destData[destI++] = colorMap[*srcData++ *3];
-                                if(destI >= lineEnd)
-                                {
-                                    destI = 0;
-                                    destData -= lineSize;
-                                }
-                            }
-                            break;
-                            
-                        case 2: // Greyscale with Alpha
-                            destI = 0;
-                            for(i = curWidth * curHeight; i--;)
-                            {
-                                colorIndex = *srcData++;
-                                if(colorIndex == transparentIndex)
-                                {
-                                    destData[destI++] = 0;
-                                    destData[destI++] = 0;
-                                }
-                                else
-                                {
-                                    destData[destI++] = colorMap[colorIndex*3];
-                                    destData[destI++] = 255;
-                                }
-                                
-                                if(destI >= lineEnd)
-                                {
-                                    destI = 0;
-                                    destData -= lineSize;
-                                }
-                            }
-                            break;
-                            
-                        case 3: // RGB without Alpha
-                            destI = 0;
-                            for(i = curWidth * curHeight; i--;)
-                            {
-                                colorIndex = *srcData++;
-                                for(j = 0; j < 3; j++)
-                                {
-                                    destData[destI++] = 
-                                        colorMap[colorIndex * 3 + j];
-                                }
-                                
-                                if(destI >= lineEnd)
-                                {
-                                    destI = 0;
-                                    destData -= lineSize;
-                                }
-                            }
-                            break;
-                            
-                        case 4: // RGB with Alpha
-                            destI = xOff * 4;                    
+                        colorIndex = *srcData++;
+                        if(colorIndex == transparentIndex)
+                        {
+                            destData[destI++] = 0;
+                            destData[destI++] = 0;
+                            destData[destI++] = 0;
+                            destData[destI++] = 0;
+                        }
+                        else
+                        {
+                            // RGB
+                            destData[destI++] = colorMap[colorIndex * 3];
+                            destData[destI++] = colorMap[colorIndex * 3 + 1];
+                            destData[destI++] = colorMap[colorIndex * 3 + 2];
+                            // ALPHA
+                            destData[destI++] = 255;
+                        }
 
-                            for(i = curWidth * curHeight; i--;)
-                            {
-                                colorIndex = *srcData++;
-                                if(colorIndex == transparentIndex)
-                                {
-#if 0
-                                    for(j = 0; j < 3; j++)
-                                        destData[destI++] = 0; // RGB
-                                    destData[destI++] = 0;     // ALPHA
-#endif
-
-                                    destI += 4;
-                                }
-                                else
-                                {
-                                    for(j = 0; j < 3; j++)
-                                    {
-                                        destData[destI++] = 
-                                            colorMap[colorIndex * 3 + j];// RGB
-                                    }
-                                    
-                                    destData[destI++] = 255;          // ALPHA
-                                }
-                                
-                                if(destI >= lineEnd)
-                                {
-                                    destI = xOff * 4;
-                                    destData -= lineSize;
-                                }
-                            }
-                            break;
+                        // If we have made it past the right edge of the image.
+                        if(destI >= lineEnd)
+                        {
+                            destI = xOff * 4;
+                            destData -= lineSize;
+                        }
                     }
                     
                     retCode = true;
@@ -507,7 +448,23 @@ bool GIFImageFileType::read(      Image        *OSG_GIF_ARG(pImage),
                     break;
             }
         }
-        
+
+        channel = (hasColor ? 3 : 1) + (hasTransparency ? 1 : 0);
+        switch(channel)
+        {
+            case 1:
+                pImage->reformat(Image::OSG_L_PF);
+                break;
+            case 2:
+                pImage->reformat(Image::OSG_LA_PF);
+                break;
+            case 3:
+                pImage->reformat(Image::OSG_RGB_PF);
+                break;
+            case 4:
+                break;
+        };
+
         GIFFree(gifStream);
     }
     else
@@ -684,7 +641,7 @@ static GIFStream *GIFRead(std::istream &is)
     unsigned char   c;
     GIFStream       *gifStream = 0;
     GIFData         *cur, **end;
-    GIF89info       info = {0, 0, 0, gif_no_disposal};
+    GIF89info       info = {-1, 0, 0, gif_no_disposal};
     int             resetInfo = GIF_TRUE;
     int             n;
 
@@ -717,7 +674,10 @@ static GIFStream *GIFRead(std::istream &is)
 
     gifStream->cmapSize = 2 << (buf[4] & 0x07);
     gifStream->colorMapSize = gifStream->cmapSize;
-    gifStream->colorResolution = (int(buf[4] & 0x70) >> 3) + 1;
+    gifStream->sort = BitSet(buf[4], 0x08);
+    gifStream->colorResolution = (int(buf[4] & 0x70) >> 4) + 1;
+    gifStream->hasGlobalColorTable = (buf[4] & 0x80) >> 7;
+
     gifStream->background = buf[5];
     gifStream->aspectRatio = buf[6];
 
@@ -728,7 +688,7 @@ static GIFStream *GIFRead(std::istream &is)
     /*
     **  Global colormap is present.
     */
-    if(BitSet(buf[4], LOCALCOLORMAP))
+    if(gifStream->hasGlobalColorTable)
     {
         if(readColorMap(is, gifStream->cmapSize, gifStream->cmapData))
         {
@@ -737,6 +697,8 @@ static GIFStream *GIFRead(std::istream &is)
     }
     else
     {
+        // Only use the background color if we have a global table.
+        // NOTE: The cmapData contents are undefined.
         gifStream->cmapSize = 0;
         gifStream->background = -1;
     }
@@ -865,6 +827,7 @@ static GIFStream *GIFRead(std::istream &is)
             cur->width = MKINT(buf[4], buf[5]);
             cur->height = MKINT(buf[6], buf[7]);
             cur->data.image.cmapSize = 1 << ((buf[8] & 0x07) + 1);
+            cur->data.image.hasColorTable = BitSet(buf[8], LOCALCOLORMAP);
             if(BitSet(buf[8], LOCALCOLORMAP))
             {
                 if(readColorMap(is, cur->data.image.cmapSize,
@@ -881,6 +844,7 @@ static GIFStream *GIFRead(std::istream &is)
             cur->data.image.data = static_cast<unsigned char *>(
                 malloc(cur->width * cur->height));
             cur->data.image.interlaced = BitSet(buf[8], INTERLACE);
+            cur->data.image.sort = BitSet(buf[8], 0x20);
             readImage(is, BitSet(buf[8], INTERLACE), cur->width, cur->height,
                       cur->data.image.data);
 
