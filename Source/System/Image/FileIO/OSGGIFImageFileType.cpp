@@ -218,7 +218,9 @@ bool GIFImageFileType::read(      Image        *OSG_GIF_ARG(pImage),
         for(gifData = gifStream->data; gifData; gifData = gifData->next)
         {
             if(gifData->type == gif_image)
+            {
                 frameCount++;
+            }
         }
     }
 
@@ -691,7 +693,7 @@ static GIFStream *GIFRead(std::istream &is)
 
     if(!ReadOK(is, buf, 6))
     {
-        GIF_ERROR("error reading magic number");
+        GIF_ERROR("error reading header");
     }
 
     if(strncmp(reinterpret_cast<char *>(buf), "GIF", 3) != 0)
@@ -705,7 +707,7 @@ static GIFStream *GIFRead(std::istream &is)
 
     if(!ReadOK(is, buf, 7))
     {
-        GIF_ERROR("failed to read screen descriptor");
+        GIF_ERROR("failed to read logical screen descriptor");
     }
 
     gifStream = NEW(GIFStream);
@@ -757,8 +759,8 @@ static GIFStream *GIFRead(std::istream &is)
 
         cur = NULL;
 
-        if(c == '!')
-        {           /* Extension */
+        if(c == '!') // Graphic Control Extension (0x21)
+        {
             if(!ReadOK(is, &c, 1))
             {
                 GIF_ERROR("EOF / read error on extention function code");
@@ -771,8 +773,11 @@ static GIFStream *GIFRead(std::istream &is)
                     static_cast<GIFDisposalType>((buf[0] >> 2) & 0x7);
                 info.inputFlag = (buf[0] >> 1) & 0x1;
                 info.delayTime = MKINT(buf[1], buf[2]);
+                // If the transparent bit is set
                 if(BitSet(buf[0], 0x1))
+                {
                     info.transparent = buf[3];
+                }
 
                 while(GetDataBlock(is, buf) != 0)
                     ;
@@ -788,7 +793,7 @@ static GIFStream *GIFRead(std::istream &is)
                 */
                 cur = NEW(GIFData);
 
-                if(c == 0x01)
+                if(c == 0x01) // Text (0x01)
                 {
                     (void) GetDataBlock(is, buf);
 
@@ -806,7 +811,7 @@ static GIFStream *GIFRead(std::istream &is)
 
                     resetInfo = GIF_TRUE;
                 }
-                else
+                else // Comment (0xFE)
                 {
                     cur->type = gif_comment;
                 }
@@ -844,7 +849,7 @@ static GIFStream *GIFRead(std::istream &is)
                     ;
             }
         }
-        else if(c == ',')
+        else if(c == ',') // Image Descriptor (0x2C)
         {
             if(!ReadOK(is, buf, 9))
             {
