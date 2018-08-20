@@ -300,30 +300,6 @@ void FieldContainer::registerChangedContainer(void)
         _pContainerChanges->uiContainerId        = this->getId();
         _pContainerChanges->bvUncommittedChanges = &_bvChanged;
     }
-    else
-    {
-        if(_pContainerChanges->pList != Thread::getCurrentChangeList())
-        {
-           std::string name("Unknown Name");
-
-           AttachmentContainer *attachment_container =
-               dynamic_cast<AttachmentContainer*>(this);
-
-           if(NULL != attachment_container)
-           {
-               const Char8 *temp_name = getName(attachment_container);
-
-               if(NULL != temp_name)
-               {
-                   name = temp_name;
-               }
-           }
-
-           SWARNING 
-               << "Unsafe change from multiple threads for FieldContainer ["
-               << getType().getCName() << "]: " << name << std::endl;
-        }
-    }
 
     pCL->addUncommited(_pContainerChanges);
 
