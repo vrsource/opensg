@@ -103,8 +103,10 @@ inline
 ReflexiveContainer::~ReflexiveContainer(void)
 {
 #ifdef OSG_ENABLE_MEMORY_DEBUGGING
+    osgSpinLock(&_uiContainerId, SpinLockBit);
    _bvChanged         = 0xDEADBEEF;
    _pContainerChanges = (ContainerChangeEntry*)(0xDEADBEEF);
+    osgSpinLockRelease(&_uiContainerId, SpinLockClearMask);
 #endif
 }
 
@@ -156,7 +158,11 @@ void ReflexiveContainer::clearChangeEntry(ContainerChangeEntry *pRef)
     if(_pContainerChanges == pRef)
     {
         _pContainerChanges = NULL;
-        _bvChanged         = 0x0000;
+
+        // NOTE: This requires not having more than 0xFFFF (16) fields.
+        //       If this becomes an issue we could consider setting it to
+        //       TypeTraits<BitVector>::BitsClear instead.
+        _bvChanged = 0x0000;
     }
 
     osgSpinLockRelease(&_uiContainerId, SpinLockClearMask);
@@ -228,12 +234,14 @@ EditFieldHandle ReflexiveContainer::editHandledField(UInt32 fieldId)
 
     if(desc != NULL)
     {
+        osgSpinLock(&_uiContainerId, SpinLockBit);
         if(_bvChanged == TypeTraits<BitVector>::BitsClear)
         {
             registerChangedContainerV();
         }
 
         _bvChanged |= desc->getFieldMask();
+        osgSpinLockRelease(&_uiContainerId, SpinLockClearMask);
 
         return EditFieldHandle(desc->editField(*this), desc);
     }
@@ -248,12 +256,14 @@ EditFieldHandle ReflexiveContainer::editHandledField(const Char8 *fieldName)
 
     if(desc != NULL)
     {
+        osgSpinLock(&_uiContainerId, SpinLockBit);
         if(_bvChanged == TypeTraits<BitVector>::BitsClear)
         {
             registerChangedContainerV();
         }
 
         _bvChanged |= desc->getFieldMask();
+        osgSpinLockRelease(&_uiContainerId, SpinLockClearMask);
 
         return EditFieldHandle(desc->editField(*this), desc);
     }

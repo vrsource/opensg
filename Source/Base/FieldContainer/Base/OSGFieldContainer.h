@@ -409,6 +409,10 @@ class FieldContainer : public ReflexiveContainer
     OSG_BASE_DLLMAPPING
     virtual void            registerChangedContainerV(void);
 
+
+    OSG_BASE_DLLMAPPING
+            void            verifyThreadSafety(ConstFieldMaskArg whichField);
+
     /*! \}                                                                 */
     /*---------------------------------------------------------------------*/
     /*! \name                MT Construction                               */
