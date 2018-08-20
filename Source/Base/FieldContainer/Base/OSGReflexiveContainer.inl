@@ -158,7 +158,11 @@ void ReflexiveContainer::clearChangeEntry(ContainerChangeEntry *pRef)
     if(_pContainerChanges == pRef)
     {
         _pContainerChanges = NULL;
-        _bvChanged         = 0x0000;
+
+        // NOTE: This requires not having more than 0xFFFF (16) fields.
+        //       If this becomes an issue we could consider setting it to
+        //       TypeTraits<BitVector>::BitsClear instead.
+        _bvChanged = 0x0000;
     }
 
     osgSpinLockRelease(&_uiContainerId, SpinLockClearMask);
