@@ -656,15 +656,19 @@ UInt32 OSG::Window::validateGLObject(UInt32   osgId,
     
     if(osgId >= _mfGlObjectLastReinitialize.size())
     {
-        editMField( GlObjectLastReinitializeFieldId,
-                   _mfGlObjectLastReinitialize      );
+        // NOTE: Since we don't use aspects to sync changes, don't register
+        //       changes for GL objects to simplify things.
+        //editMField( GlObjectLastReinitializeFieldId,
+        //           _mfGlObjectLastReinitialize      );
 
         _mfGlObjectLastReinitialize.resize(osgId + 1, 0);
     }
 
     if(osgId >= _mfGlObjectLastRefresh.size())
     {
-        editMField(GlObjectLastRefreshFieldId, _mfGlObjectLastRefresh);
+        // NOTE: Since we don't use aspects to sync changes, don't register
+        //       changes for GL objects to simplify things.
+        //editMField(GlObjectLastRefreshFieldId, _mfGlObjectLastRefresh);
 
         _mfGlObjectLastRefresh.resize(osgId + 1, 0);
     }
@@ -689,8 +693,10 @@ UInt32 OSG::Window::validateGLObject(UInt32   osgId,
     
     if(_mfGlObjectLastReinitialize[osgId] == 0)
     {
-        editMField( GlObjectLastReinitializeFieldId, 
-                   _mfGlObjectLastReinitialize     );
+        // NOTE: Since we don't use aspects to sync changes, don't register
+        //       changes for GL objects to simplify things.
+        //editMField( GlObjectLastReinitializeFieldId,
+        //           _mfGlObjectLastReinitialize     );
 
         obj->incRefCounter();
         returnValue = obj->getFunctor()(pEnv, osgId, initialize, uiOptions);
@@ -809,8 +815,10 @@ void Window::doRefreshGLObject(UInt32 osgId)
         if(pWin == NULL)
             continue;
 
-        pWin->editMField(GlObjectLastRefreshFieldMask,
-                         pWin->_mfGlObjectLastRefresh);
+        // NOTE: Since we don't use aspects to sync changes, don't register
+        //       changes for GL objects to simplify things.
+        //pWin->editMField(GlObjectLastRefreshFieldMask,
+        //                 pWin->_mfGlObjectLastRefresh);
 
         UInt32    lastinv = pWin->getGlObjectEventCounter() + 1;
 
@@ -821,7 +829,9 @@ void Window::doRefreshGLObject(UInt32 osgId)
 
         field[osgId] = lastinv;
 
-        pWin->setGlObjectEventCounter(lastinv); 
+        // NOTE: Since we don't use aspects to sync changes, don't register
+        //       changes for GL objects to simplify things.
+        pWin->_sfGlObjectEventCounter.setValue(lastinv);
     }
 }
 
@@ -882,8 +892,10 @@ void Window::doReinitializeGLObject(UInt32 osgId)
         if(pWin == NULL)
             continue;
 
-        pWin->editMField(GlObjectLastReinitializeFieldMask,
-                         pWin->_mfGlObjectLastReinitialize);
+        // NOTE: Since we don't use aspects to sync changes, don't register
+        //       changes for GL objects to simplify things.
+        //pWin->editMField(GlObjectLastReinitializeFieldMask,
+        //                 pWin->_mfGlObjectLastReinitialize);
 
         UInt32    lastinv = pWin->getGlObjectEventCounter() + 1;
 
@@ -898,7 +910,9 @@ void Window::doReinitializeGLObject(UInt32 osgId)
 
         field[osgId] = lastinv;
 
-        pWin->setGlObjectEventCounter(lastinv);
+        // NOTE: Since we don't use aspects to sync changes, don't register
+        //       changes for GL objects to simplify things.
+        pWin->_sfGlObjectEventCounter.setValue(lastinv);
     }
 }
 
@@ -943,8 +957,10 @@ void Window::doResetGLObjectStatus(UInt32 osgId, UInt32 num)
 {
     // NOTE: staticAcquire() has been called before calling this.
 
-    editMField(GlObjectLastReinitializeFieldMask, _mfGlObjectLastReinitialize);
-    editMField(GlObjectLastRefreshFieldMask,      _mfGlObjectLastRefresh     );
+    // NOTE: Since we don't use aspects to sync changes, don't register
+    //       changes for GL objects to simplify things.
+    //editMField(GlObjectLastReinitializeFieldMask, _mfGlObjectLastReinitialize);
+    //editMField(GlObjectLastRefreshFieldMask,      _mfGlObjectLastRefresh     );
 
     if(_mfGlObjectLastReinitialize.size() < osgId + num)
         _mfGlObjectLastReinitialize.resize(osgId + num, 0);
