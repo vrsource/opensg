@@ -324,16 +324,16 @@ void OSG::Window::onCreate(const Window *source)
     // Don't add the prototype instances to the list
     if(GlobalSystemState != Running)
         return;
-   
+
+    staticAcquire();
+
     if(source != NULL)
     {
         // mark all GL objects as not yet initialized
         doResetGLObjectStatus(1, UInt32(_glObjects.size() - 1));
     }
 
-    staticAcquire();
-
-    _allWindows.push_back(this); 
+    _allWindows.push_back(this);
 
     _windowId = _currentWindowId++;
 
@@ -368,6 +368,8 @@ void OSG::Window::onCreateAspect(const Window *createAspect,
 
 void OSG::Window::onDestroy(UInt32 uiContainerId)
 {
+    staticAcquire();
+
     // decrement GLObjects reference counter.
     for(UInt32 i = 1; i < _glObjects.size(); ++i)
     {
@@ -389,8 +391,6 @@ void OSG::Window::onDestroy(UInt32 uiContainerId)
             // the context should delete all gl objects.
         }
     }
-
-    staticAcquire();
 
     WindowStore::iterator winIt;
 
@@ -636,13 +636,16 @@ UInt32 OSG::Window::validateGLObject(UInt32   osgId,
         SWARNING << "Window::validateGLObject: id is 0!" << std::endl;
         return returnValue;
     }
-    
+
+    staticAcquire();
+
     GLObject *obj = _glObjects[osgId];
     
     if(obj == NULL)
     {
         SWARNING << "Window::validateGLObject: obj with id " << osgId 
                  <<" is NULL!" << std::endl;
+        staticRelease();
         return returnValue;
     }
 
@@ -705,6 +708,8 @@ UInt32 OSG::Window::validateGLObject(UInt32   osgId,
         _lastValidate[osgId] = getGlObjectEventCounter();
     }
 
+    staticRelease();
+
     return returnValue;
 }
 
@@ -721,11 +726,20 @@ void OSG::Window::validateAllGLObjects(void)
         activate();
         doFrameInit();
 
+        // NOTE: This is less than ideal, but we need to acquire the lock
+        //       before accessing _glObjects and we don't want to make a copy.
+        //       This method is not called in normal operations though.
+        staticAcquire();
         for (UInt32 i = 1; i < _glObjects.size(); ++i)
         {
             if(_glObjects[i] != NULL)
+            {
+                staticRelease();
                 validateGLObject(i, &_oEnv);
+                staticAcquire();
+            }
         }
+        staticRelease();
     
         doFrameExit();
         deactivate();
@@ -784,6 +798,7 @@ void OSG::Window::refreshAllGLObjects(void)
 */
 void Window::doRefreshGLObject(UInt32 osgId)
 {
+    // NOTE: staticAcquire() has been called before calling this.
     WindowStore::const_iterator winIt  = _allWindows.begin();
     WindowStore::const_iterator winEnd = _allWindows.end  ();
 
@@ -859,6 +874,7 @@ void Window::doReinitializeGLObject(UInt32 osgId)
     WindowStore::const_iterator winIt  = _allWindows.begin();
     WindowStore::const_iterator winEnd = _allWindows.end  ();
 
+    // NOTE: staticAcquire() has been called before calling this.
     for(; winIt != winEnd; ++winIt)
     {
         Window *pWin = *winIt;
@@ -896,6 +912,7 @@ void Window::doReinitializeGLObject(UInt32 osgId)
  */
 void Window::resetGLObjectStatus(UInt32 osgId, UInt32 num)
 {
+    // NOTE: staticAcquire() has been called before calling this.
     if(osgId == 0)
     {
         SWARNING << "Window::resetGLObject: osgId is 0." << std::endl;
@@ -924,6 +941,8 @@ void Window::resetGLObjectStatus(UInt32 osgId, UInt32 num)
  */
 void Window::doResetGLObjectStatus(UInt32 osgId, UInt32 num)
 {
+    // NOTE: staticAcquire() has been called before calling this.
+
     editMField(GlObjectLastReinitializeFieldMask, _mfGlObjectLastReinitialize);
     editMField(GlObjectLastRefreshFieldMask,      _mfGlObjectLastRefresh     );
 
@@ -953,10 +972,13 @@ void Window::doResetGLObjectStatus(UInt32 osgId, UInt32 num)
 
 void OSG::Window::destroyGLObject(UInt32 osgId, UInt32 num)
 {
+    staticAcquire();
+
 #ifdef OSG_DEBUG
     if(osgId >= _glObjects.size() || _glObjects[osgId] == NULL)
     {
         FWARNING(("Window::destroyGLObject: object %d is NULL!\n", osgId));
+        staticRelease();
         return;
     }
 #endif
@@ -972,10 +994,9 @@ void OSG::Window::destroyGLObject(UInt32 osgId, UInt32 num)
             _glObjects[osgId + j] = NULL;
         }
 
+        staticRelease();
         return;
     }
-
-    staticAcquire();
 
     WindowStore::const_iterator winIt  = _allWindows.begin();
     WindowStore::const_iterator winEnd = _allWindows.end  ();
@@ -1573,6 +1594,8 @@ void OSG::Window::doFrameExit(void)
     st = _glObjectDestroyList.begin();
     en = _glObjectDestroyList.end  ();
 
+    staticAcquire();
+
     while(st != en)
     {
         UInt32 i = st->first, n = st->second;
@@ -1626,6 +1649,8 @@ void OSG::Window::doFrameExit(void)
     }
 
     _glObjectDestroyList.clear();
+
+    staticRelease();
 
     // Test for OpenGL errors. Just a little precaution to catch
     // stray errors. This is the only OpenGL error test in opt mode
@@ -2540,6 +2565,7 @@ void OSG::Window::dump(      UInt32    OSG_CHECK_ARG(uiIndent),
 
 void Window::staticDump(void)
 {
+    staticAcquire();
     fprintf(stderr, "Window::sdump %zd %zd\n",
             _glObjects.size(),
             _glObjects.capacity());
@@ -2548,6 +2574,7 @@ void Window::staticDump(void)
     {
         fprintf(stderr, "gl[%d] = %p\n", i, static_cast<void *>(_glObjects[i]));
     }
+    staticRelease();
 }
 
 void Window::resolveLinks(void)
