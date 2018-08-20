@@ -347,12 +347,14 @@ void FieldContainer::verifyThreadSafety(ConstFieldMaskArg whichField)
 
 void FieldContainer::registerChangedContainer(void)
 {
+    // Should only get here when created is called or a field is edited before onCreate is called.
 #ifndef SILENT
     fprintf(stderr, "reg changed %p 0x%016llx\n",
             _pContainerChanges, _bvChanged);
 #endif
 
-    osgSpinLock(&_uiContainerId, SpinLockBit);
+    // NOTE: The _uiContainerId spin lock has been acquired before calling this.
+    //osgSpinLock(&_uiContainerId, SpinLockBit);
 
 #ifdef OSG_DEBUG
     // Check if the container is registered with the FC factory.
@@ -380,7 +382,8 @@ void FieldContainer::registerChangedContainer(void)
 
     pCL->addUncommited(_pContainerChanges);
 
-    osgSpinLockRelease(&_uiContainerId, SpinLockClearMask);
+    // NOTE: The _uiContainerId spin lock has been acquired before calling this.
+    //osgSpinLockRelease(&_uiContainerId, SpinLockClearMask);
 }
 
 void FieldContainer::registerChangedContainerV(void)

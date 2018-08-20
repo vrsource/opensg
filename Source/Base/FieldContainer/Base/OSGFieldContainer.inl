@@ -373,12 +373,16 @@ AspectStoreP FieldContainer::getAspectStore(void) const
 inline
 void FieldContainer::editSField(ConstFieldMaskArg whichField)
 {
+    osgSpinLock(&_uiContainerId, SpinLockBit);
     if(_bvChanged == TypeTraits<BitVector>::BitsClear)
     {
         registerChangedContainer();
     }
     
+    verifyThreadSafety(whichField);
+
     _bvChanged |= whichField;
+    osgSpinLockRelease(&_uiContainerId, SpinLockClearMask);
 }
 
 #if OSG_MT_CPTR_ASPECT
@@ -386,15 +390,19 @@ template<class FieldT> inline
 void FieldContainer::editMField(ConstFieldMaskArg  whichField,
                                 FieldT            &oField    )
 {
+    osgSpinLock(&_uiContainerId, SpinLockBit);
     if(_bvChanged == TypeTraits<BitVector>::BitsClear)
     {
         registerChangedContainer();
     }
 
+    verifyThreadSafety(whichField);
+
     _bvChanged |= whichField;
 
     if(oField.isShared() == false)
     {
+        osgSpinLockRelease(&_uiContainerId, SpinLockClearMask);
         return;
     }
 
@@ -408,18 +416,23 @@ void FieldContainer::editMField(ConstFieldMaskArg  whichField,
                      oOffsets);
 
     _pAspectStore->release();
+    osgSpinLockRelease(&_uiContainerId, SpinLockClearMask);
 }
 #else
 template<class FieldT> inline
 void FieldContainer::editMField(ConstFieldMaskArg  whichField,
                                 FieldT            &oField    )
 {
+    osgSpinLock(&_uiContainerId, SpinLockBit);
     if(_bvChanged == TypeTraits<BitVector>::BitsClear)
     {
         registerChangedContainer();
     }
     
+    verifyThreadSafety(whichField);
+
     _bvChanged |= whichField;
+    osgSpinLockRelease(&_uiContainerId, SpinLockClearMask);
 }
 #endif
 
@@ -498,10 +511,14 @@ void FieldContainer::onCreateAspect(const FieldContainer *,
 inline
 void FieldContainer::onCreate(const FieldContainer *)
 {
+    osgSpinLock(&_uiContainerId, SpinLockBit);
     registerChangedContainer();
     
     _bvChanged = 
         TypeTraits<BitVector>::BitsSet & getType().getUnmarkedOnCreate();
+
+    verifyThreadSafety(_bvChanged);
+    osgSpinLockRelease(&_uiContainerId, SpinLockClearMask);
 }
 
 inline

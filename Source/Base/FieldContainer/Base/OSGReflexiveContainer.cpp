@@ -98,7 +98,10 @@ GetFieldHandlePtr ReflexiveContainer::invalidGetField(void) const
 #ifdef OSG_ENABLE_MEMORY_DEBUGGING
 bool ReflexiveContainer::_check_is_deleted()
 {
-   return ((_bvChanged == 0xDEADBEEF) &&
-           (_pContainerChanges == (ContainerChangeEntry*)(0xDEADBEEF)));
+    osgSpinLock(&_uiContainerId, SpinLockBit);
+    const result((_bvChanged == 0xDEADBEEF) &&
+                 (_pContainerChanges == (ContainerChangeEntry*)(0xDEADBEEF)));
+    osgSpinLockRelease(&_uiContainerId, SpinLockClearMask);
+    return result;
 }
 #endif

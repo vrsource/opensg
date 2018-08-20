@@ -103,8 +103,10 @@ inline
 ReflexiveContainer::~ReflexiveContainer(void)
 {
 #ifdef OSG_ENABLE_MEMORY_DEBUGGING
+    osgSpinLock(&_uiContainerId, SpinLockBit);
    _bvChanged         = 0xDEADBEEF;
    _pContainerChanges = (ContainerChangeEntry*)(0xDEADBEEF);
+    osgSpinLockRelease(&_uiContainerId, SpinLockClearMask);
 #endif
 }
 
@@ -228,12 +230,14 @@ EditFieldHandle ReflexiveContainer::editHandledField(UInt32 fieldId)
 
     if(desc != NULL)
     {
+        osgSpinLock(&_uiContainerId, SpinLockBit);
         if(_bvChanged == TypeTraits<BitVector>::BitsClear)
         {
             registerChangedContainerV();
         }
 
         _bvChanged |= desc->getFieldMask();
+        osgSpinLockRelease(&_uiContainerId, SpinLockClearMask);
 
         return EditFieldHandle(desc->editField(*this), desc);
     }
@@ -248,12 +252,14 @@ EditFieldHandle ReflexiveContainer::editHandledField(const Char8 *fieldName)
 
     if(desc != NULL)
     {
+        osgSpinLock(&_uiContainerId, SpinLockBit);
         if(_bvChanged == TypeTraits<BitVector>::BitsClear)
         {
             registerChangedContainerV();
         }
 
         _bvChanged |= desc->getFieldMask();
+        osgSpinLockRelease(&_uiContainerId, SpinLockClearMask);
 
         return EditFieldHandle(desc->editField(*this), desc);
     }
