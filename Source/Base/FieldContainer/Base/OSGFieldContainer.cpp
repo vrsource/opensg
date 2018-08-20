@@ -268,6 +268,83 @@ bool FieldContainer::unlinkChild(FieldContainer * const pChild,
     return false;
 }
 
+void FieldContainer::verifyThreadSafety(ConstFieldMaskArg whichField)
+{
+    std::string reason("");
+
+    // It should not be possible for _pContainerChanges to be NULL at this
+    // point since we call registerChangedContainer() before calling this function.
+    OSG_ASSERT(_pContainerChanges != NULL and "Must have _pContainerChanges at this point");
+
+    // In this case the calling thread did not create the initial set of
+    // changes. This points to a potential issue because an object is
+    // being modified from a thread that doesn't own it.
+    if(_pContainerChanges->pList != Thread::getCurrentChangeList())
+    {
+        reason = "Unsafe change from multiple threads for FieldContainer";
+    }
+
+    if (!reason.empty())
+    {
+        std::string name("Unknown Name");
+
+        AttachmentContainer *attachment_container =
+            dynamic_cast<AttachmentContainer*>(this);
+
+        if (NULL != attachment_container)
+        {
+            const Char8 *temp_name = getName(attachment_container);
+
+            if (NULL != temp_name)
+            {
+                name = temp_name;
+            }
+        }
+
+        SWARNING << reason << " (0x" << std::hex << whichField << std::dec << ") ["
+                 << getType().getCName() << "]: " << this->getId() << " - " << name
+                 << " from: " << Thread::getCurrent()->getCName() << std::endl;
+
+        SWARNING << "_bvChanged: 0x" << std::hex << _bvChanged << std::dec << std::endl;
+        const TypeObject& oType(this->getType());
+        for (UInt32 i = 1; i <= oType.getNumFieldDescs(); ++i)
+        {
+            FieldDescriptionBase *pDesc = oType.getFieldDesc(i);
+
+            if (pDesc != NULL)
+            {
+                if ((_bvChanged & pDesc->getFieldMask()) != 0x0000)
+                {
+                    SWARNING << "   " << pDesc->getName() << std::endl;
+                }
+            }
+        }
+
+        SWARNING << "New changes" << std::endl;
+        for(UInt32 i = 1; i <= oType.getNumFieldDescs(); ++i)
+        {
+            FieldDescriptionBase *pDesc = oType.getFieldDesc(i);
+
+            if (pDesc != NULL)
+            {
+                if ((whichField & pDesc->getFieldMask()) != 0x0000)
+                {
+                    SWARNING << "   " << pDesc->getName() << std::endl;
+                }
+            }
+        }
+
+        //SWARNING << "==== Field Desc ====" << std::endl;
+        //dumpFieldInfo();
+        //SWARNING << "== Current Thread ==" << std::endl;
+        //Thread::getCurrentChangeList()->dump();
+        //SWARNING << "=== Other Thread ===" << std::endl;
+        //_pContainerChanges->pList->dump();
+        //SWARNING << "====================" << std::endl;
+    }
+}
+
+
 void FieldContainer::registerChangedContainer(void)
 {
 #ifndef SILENT
