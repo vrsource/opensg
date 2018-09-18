@@ -566,7 +566,7 @@ def tempLookatPostScanSetup(osg):
 
 def postGenClassesSetup(osg, mb):
 
-  for class_name in ["Thread", "ExternalThread"]:
+  for class_name in ["Thread", "ExternalThread", "SimpleSceneManager"]:
      c = osg.class_(class_name)
      # NOTE: These non-FC types declare ObjRefPtr instead of ObjRecPtr as their recorded pointer
      # type. Argh.
