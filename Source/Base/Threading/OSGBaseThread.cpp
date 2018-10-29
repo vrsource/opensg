@@ -548,6 +548,12 @@ BaseThread *BaseWinThreadBase::getCurrent(void)
 #ifdef OSG_WIN32_ASPECT_USE_LOCALSTORAGE
     BaseThread **pThread;
 
+    // Early out if threading has not been started or has been terminated.
+    if (BaseThread::_threadKey == 0xFFFFFFFF || BaseThread::_threadKey == 0)
+    {
+       return NULL;
+    }
+
     pThread = static_cast<BaseThread **>(TlsGetValue(_threadKey));
 
 # ifdef OSG_ENABLE_AUTOINIT_THREADS
@@ -583,6 +589,12 @@ BaseThread *BaseWinThreadBase::getCurrentInternal(void)
 {
 #ifdef OSG_WIN32_ASPECT_USE_LOCALSTORAGE
     BaseThread **pThread;
+
+    // Early out if threading has not been started or has been terminated.
+    if (BaseThread::_threadKey == 0xFFFFFFFF || BaseThread::_threadKey == 0)
+    {
+       return NULL;
+    }
 
     pThread = static_cast<BaseThread **>(TlsGetValue(_threadKey));
 
