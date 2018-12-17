@@ -301,22 +301,9 @@ void FieldContainer::verifyThreadSafety(ConstFieldMaskArg whichField)
             }
         }
 
-        // Attempt to find the name of the thread.
-        std::string thread_name("Unknown thread");
-        BaseThread* base_thread(Thread::getCurrent());
-        if (base_thread != NULL)
-        {
-           const Char8 *temp_name = Thread::getCurrent()->getCName();
-
-           if (NULL != temp_name)
-           {
-              thread_name = temp_name;
-           }
-        }
-
         SWARNING << reason << " (0x" << std::hex << whichField << std::dec << ") ["
                  << getType().getCName() << "]: " << this->getId() << " - " << name
-                 << " from: " << thread_name << std::endl;
+                 << std::endl;
 
         SWARNING << "_bvChanged: 0x" << std::hex << _bvChanged << std::dec << std::endl;
         const TypeObject& oType(this->getType());
