@@ -153,7 +153,7 @@ class OSG_SYSTEM_DLLMAPPING IntersectAction : public Action
     // set (temporary) results
     Action::ResultE setEnterLeave(      Real32   enter, 
                                         Real32   leave   );
-    void            setHit       (      Real32   t, 
+    virtual void    setHit       (      Real32   t, 
                                         Node    *obj, 
                                         Int32    triIndex, 
                                   const Vec3f   &normal,
@@ -161,7 +161,7 @@ class OSG_SYSTEM_DLLMAPPING IntersectAction : public Action
 
     // when entering/leaving a different coordinate system, the values might
     // have to be scaled
-    void scale(Real32 s);
+    virtual void scale(Real32 s);
     
     /*------------------------- your_operators ------------------------------*/
 
