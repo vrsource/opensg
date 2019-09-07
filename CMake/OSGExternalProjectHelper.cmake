@@ -235,7 +235,7 @@ MACRO(OSG_INIT)
   #### Python
   #############
 
-  FIND_PACKAGE(PythonInterp)
+  FIND_PACKAGE(Python COMPONENTS Interpreter Development)
 
   ##########
   #### boost
@@ -384,12 +384,12 @@ MACRO(OSG_INIT)
   #### Python
   #############
 
-  FIND_PACKAGE(PythonLibs)
+  FIND_PACKAGE(Python COMPONENTS Interpreter Development)
 
-  OSG_ADD_OPT(PYTHON_INCLUDE_PATH)
-  OSG_ADD_OPT(PYTHON_LIBRARY)
+  #OSG_ADD_OPT(Python_INCLUDE_DIR)
+  #OSG_ADD_OPT(PYTHON_LIBRARY)
 
-  IF(Boost_FOUND AND PYTHONLIBS_FOUND)
+  IF(Boost_FOUND AND Python_Development_FOUND)
 
     FIND_PACKAGE(Boost COMPONENTS python)
 
@@ -416,7 +416,7 @@ MACRO(OSG_INIT)
     # so if we get here Boost_FOUND was true in the first place
     SET(Boost_FOUND TRUE)
 
-  ENDIF(Boost_FOUND AND PYTHONLIBS_FOUND)
+  ENDIF(Boost_FOUND AND Python_Development_FOUND)
 
 
   CHECK_BUILD_DIR()
