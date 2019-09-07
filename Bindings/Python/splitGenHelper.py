@@ -47,7 +47,7 @@ void defaultInit(OSG::%(class_name)s* self)
     c.add_registration_code('def("init", defaultInit)')
     c.add_registration_code('def("init", wrapInit, bp::arg("oFunc"))')
   except pygccxml.declarations.matcher.declaration_not_found_t:
-    print "Skipping init() handling for", class_name
+    print("Skipping init() handling for", class_name)
 
 
 def handleFindNamedComponent(osg, class_name):
@@ -100,22 +100,22 @@ def dumpSystem(osg):
 
   if exportable_mems is None:
      exportable_mems = []
-  elif exportable_mems and type(exportable_mems[0]) is types.ListType:
+  elif exportable_mems and type(exportable_mems[0]) is list:
      exportable_mems = exportable_mems[0]
 
   redefined_funcs = cls.redefined_funcs()
   if redefined_funcs is None:
      redefined_funcs = []
-  elif redefined_funcs and type(redefined_funcs[0]) is types.ListType:
+  elif redefined_funcs and type(redefined_funcs[0]) is list:
      redefined_funcs = redefined_funcs[0]
 
   for member in exportable_mems + redefined_funcs:
-    print "mb : ", member
-    print "  ]: ", member.ignore
+    print("mb : ", member)
+    print("  ]: ", member.ignore)
     if hasattr(member, "virtuality"):
-       print "  }:", member.virtuality
+       print("  }:", member.virtuality)
 
-  print "xxx ", cls.is_wrapper_needed()
+  print("xxx ", cls.is_wrapper_needed())
 
 
   cls = osg["ShaderValueVariableBase"]    
@@ -123,22 +123,22 @@ def dumpSystem(osg):
 
   if exportable_mems is None:
      exportable_mems = []
-  elif exportable_mems and type(exportable_mems[0]) is types.ListType:
+  elif exportable_mems and type(exportable_mems[0]) is list:
      exportable_mems = exportable_mems[0]
 
   redefined_funcs = cls.redefined_funcs()
   if redefined_funcs is None:
      redefined_funcs = []
-  elif redefined_funcs and type(redefined_funcs[0]) is types.ListType:
+  elif redefined_funcs and type(redefined_funcs[0]) is list:
      redefined_funcs = redefined_funcs[0]
 
   for member in exportable_mems + redefined_funcs:
-    print "mb : ", member
-    print "  ]: ", member.ignore
+    print("mb : ", member)
+    print("  ]: ", member.ignore)
     if hasattr(member, "virtuality"):
-       print "  }:", member.virtuality
+       print("  }:", member.virtuality)
 
-  print "xxx ", cls.is_wrapper_needed()
+  print("xxx ", cls.is_wrapper_needed())
 
 #  print "FOOO ", exportable_mems
 #  print "BAAR ", redefined_funcs
@@ -153,17 +153,17 @@ def dumpSystem(osg):
 
   if exportable_mems is None:
      exportable_mems = []
-  elif exportable_mems and type(exportable_mems[0]) is types.ListType:
+  elif exportable_mems and type(exportable_mems[0]) is list:
      exportable_mems = exportable_mems[0]
 
   redefined_funcs = cls.redefined_funcs()
   if redefined_funcs is None:
      redefined_funcs = []
-  elif redefined_funcs and type(redefined_funcs[0]) is types.ListType:
+  elif redefined_funcs and type(redefined_funcs[0]) is list:
      redefined_funcs = redefined_funcs[0]
 
   for member in exportable_mems + redefined_funcs:
-    print "mb : ", member
-    print "  ]: ", member.ignore
+    print("mb : ", member)
+    print("  ]: ", member.ignore)
     if hasattr(member, "virtuality"):
-       print "  }:", member.virtuality
+       print("  }:", member.virtuality)

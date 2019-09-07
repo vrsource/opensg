@@ -14,13 +14,13 @@ while (True):
 
   currentLib = None
 
-  for (libName, libDep) in libOrder.libInfo.items():
+  for (libName, libDep) in list(libOrder.libInfo.items()):
 
 #    print "N: ", libName
 #    print "D: ", libDep
 #    print "L: ", len(libDep)
 
-  
+
     if libDep != None and len(libDep) == 0:
       if len(orderedLibs) == 0:
         orderedLibs = libName
@@ -36,7 +36,7 @@ while (True):
 
     del libOrder.libInfo[currentLib]
 
-    for (libName, libDep) in libOrder.libInfo.items():
+    for (libName, libDep) in list(libOrder.libInfo.items()):
       try:
         libDep.remove(currentLib)
       except:
@@ -47,5 +47,5 @@ while (True):
 #orderedLibs = orderedLibs + "]"
 #print "ORDERED:\n"
 
-print orderedLibs
+print(orderedLibs)
 

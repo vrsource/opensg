@@ -28,12 +28,12 @@ class PrintTreeTraverser(object):
 
    def enter(self, node):
       core = node.getCore()      
-      print "  "*self.depth, "Enter: %s [%s]"%(osg2.osg.getName(node),core)
+      print("  "*self.depth, "Enter: %s [%s]"%(osg2.osg.getName(node),core))
       self.depth += 1
       return osg2.osg.Action.Continue
 
    def exit(self, node, result):
       self.depth -= 1
       core = node.getCore()
-      print "  "*self.depth, "Exit: %s [%s]"%(osg2.osg.getName(node),core)
+      print("  "*self.depth, "Exit: %s [%s]"%(osg2.osg.getName(node),core))
       return result

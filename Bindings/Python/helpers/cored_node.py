@@ -71,7 +71,7 @@ def addNodeCoreTypes(globalDict, osg2Module):
 
    node_cores = []
 
-   node_cores.extend([(n,c) for (n,c) in osg2Module.__dict__.iteritems() if isinstance(c,type) \
+   node_cores.extend([(n,c) for (n,c) in osg2Module.__dict__.items() if isinstance(c,type) \
                      and (osg2.OSGBase.NodeCore in c.__mro__) and not c.__name__.endswith("Base")])
 
    for (name,ctype) in node_cores:
