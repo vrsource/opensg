@@ -69,7 +69,23 @@ inline
 RefCountStore osgAtomicExchangeAndAdd(RefCountStore *pValue, 
                                       RefCountStore  rcDelta)
 {
-    return boost::detail::atomic_exchange_and_add(pValue, rcDelta);
+    //return boost::detail::atomic_exchange_and_add(pValue, rcDelta);
+
+    // int r = *pw;
+    // *pw += dv;
+    // return r;
+    int r;
+
+    __asm__ __volatile__
+    (
+        "lock\n\t"
+        "xadd %1, %0":
+        "=m"( *pValue ), "=r"( r ): // outputs (%0, %1)
+        "m"( *pValue ), "1"( rcDelta ): // inputs (%2, %3 == %1)
+        "memory", "cc" // clobbers
+    );
+
+    return r;
 }
 
 /*! \ingroup GrpBaseBaseAtomicFn
@@ -78,7 +94,16 @@ RefCountStore osgAtomicExchangeAndAdd(RefCountStore *pValue,
 inline 
 void osgAtomicIncrement(RefCountStore *pValue)
 {
-    boost::detail::atomic_increment(pValue);
+    //boost::detail::atomic_increment(pValue);
+
+    __asm__
+    (
+        "lock\n\t"
+        "incl %0":
+        "=m"( *pValue ): // output (%0)
+        "m"( *pValue ): // input (%1)
+        "cc" // clobbers
+    );
 }
 
 /*! \ingroup GrpBaseBaseAtomicFn
