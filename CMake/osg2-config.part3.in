@@ -97,16 +97,16 @@ def main():
 
     # Process simple single options
     if options.prefix:
-        print inst_prefix
+        print(inst_prefix)
         sys.exit(0)
     elif options.libdir:
-        print lib_dir
+        print(lib_dir)
         sys.exit(0)
     elif options.includedir:
-        print inc_dir
+        print(inc_dir)
         sys.exit(0)
     elif options.version:
-        print "${OSG_VERSION}"
+        print("${OSG_VERSION}")
         sys.exit(0)
 
     # Try to find libname
@@ -116,14 +116,14 @@ def main():
         for n in pos_args:
             for name_alt in [n, "OSG"+n, "OSGWindow"+n, None]:
                 if not name_alt:
-                    print "Error: Can not find library named: ", n
-                elif lib_map.has_key(name_alt):
+                    print("Error: Can not find library named: ", n)
+                elif name_alt in lib_map:
                     libraries.append(name_alt)
                     break
 
     # Make sure we have libraries
     if len(libraries) == 0:
-        print "Error: No libraries given."
+        print("Error: No libraries given.")
         printUsage()
         sys.exit(1)
 
@@ -135,15 +135,15 @@ def main():
         options.libpath_prefix = ""
 
     if options.cflags:
-        print string_inc_dir(collect_inc_dir(libraries, lib_map))
+        print(string_inc_dir(collect_inc_dir(libraries, lib_map)))
     elif options.libs:
-        print string_lib(collect_lib(libraries, lib_map))
+        print(string_lib(collect_lib(libraries, lib_map)))
     elif options.lflags:
-        print string_lib_dir(collect_lib_dir(libraries, lib_map))
+        print(string_lib_dir(collect_lib_dir(libraries, lib_map)))
     elif options.llibs:
         lib_dir = string_lib_dir(collect_lib_dir(libraries, lib_map))
         lib     = string_lib    (collect_lib    (libraries, lib_map))
-        print lib_dir + ' ' + lib
+        print(lib_dir + ' ' + lib)
 
     else:
         printUsage()
@@ -153,9 +153,9 @@ def main():
 def printUsage():
     global parser, lib_map
     parser.print_help()
-    print "\nLibraries: "
+    print("\nLibraries: ")
     for lib_name in lib_map.keys():
-        print "   %s"%lib_name
+        print("   %s"%lib_name)
 
 ################################################
 ## HELPER
