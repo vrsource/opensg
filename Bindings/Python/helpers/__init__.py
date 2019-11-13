@@ -17,4 +17,4 @@
 
 # Helper class
 
-from helpers import *
+from .helpers import *

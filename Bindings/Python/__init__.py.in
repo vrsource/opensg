@@ -34,7 +34,7 @@ except:
    pass
 
 # Import everything from the opensg module
-from ${PROJECT_NAME}Py import *
+from .${PROJECT_NAME}Py import *
 
 if original_dlopen_flags:
    sys.setdlopenflags(original_dlopen_flags)
@@ -56,7 +56,7 @@ def _fc_hash(self):
    else:
       return self.getId()
 
-for (n,c) in ${PROJECT_NAME}Py.__dict__.iteritems():
+for (n,c) in ${PROJECT_NAME}Py.__dict__.items():
   if isinstance(c,type) and (AttachmentContainer in c.__mro__):
     c.__cmp__  = _fc_cmp
     c.__hash__ = _fc_hash
