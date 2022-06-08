@@ -78,10 +78,13 @@ class SimpleAttachment : public Attachment
     
      /*=========================  PROTECTED  ===============================*/
 
-  protected:
+     /*=========================  PROTECTED  ===============================*/
 
+  public:
     typedef Inherited::TypeObject TypeObject;
     typedef TypeObject::InitPhase InitPhase;
+
+  protected:
 
     /*! \nohierarchy */
     struct SFieldValFunctions
