@@ -157,6 +157,7 @@ class PointerSField :
     /*! \name FieldDesc creation                                           */
     /*! \{                                                                 */
 
+  public:
     static FieldDescriptionBase *
         createFieldDescription   (const Char8                *szFieldname,
                                         UInt32                uiFieldFlags,

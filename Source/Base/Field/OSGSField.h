@@ -204,6 +204,7 @@ class SField : public Field
     const FieldType &fieldTypeExportHelper(void);
 #endif
 
+  public:
     static FieldDescriptionBase *
         createFieldDescription   (const Char8                *szFieldname,
                                         UInt32                uiFieldFlags,
