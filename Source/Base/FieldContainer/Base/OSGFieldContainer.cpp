@@ -274,7 +274,7 @@ void FieldContainer::verifyThreadSafety(ConstFieldMaskArg whichField)
 
     // It should not be possible for _pContainerChanges to be NULL at this
     // point since we call registerChangedContainer() before calling this function.
-    OSG_ASSERT(_pContainerChanges != NULL and "Must have _pContainerChanges at this point");
+    OSG_ASSERT(_pContainerChanges != NULL && "Must have _pContainerChanges at this point");
 
     // In this case the calling thread did not create the initial set of
     // changes. This points to a potential issue because an object is
