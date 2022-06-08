@@ -237,7 +237,6 @@ std::string PointSockConnection::bind(const std::string &address)
     then -1 is returned if timeout is reached
 */
 Connection::Channel PointSockConnection::selectChannel(Time timeout)
-    throw (ReadError)
 {
     try
     {
@@ -256,7 +255,7 @@ Connection::Channel PointSockConnection::selectChannel(Time timeout)
 
 /*! wait for signal
  */
-bool PointSockConnection::wait(Time timeout) throw (ReadError)
+bool PointSockConnection::wait(Time timeout)
 {
     UInt32 tag;
     try
@@ -282,7 +281,7 @@ bool PointSockConnection::wait(Time timeout) throw (ReadError)
 
 /*! send signal
  */
-void PointSockConnection::signal(void) throw (WriteError)
+void PointSockConnection::signal(void)
 {
     UInt32 tag = osgHostToNet<UInt32>(314156);
     try
@@ -334,7 +333,7 @@ void PointSockConnection::read(MemoryHandle mem,UInt32 size)
  *
  */
 
-void PointSockConnection::readBuffer() throw (ReadError)
+void PointSockConnection::readBuffer()
 {
     int size;
     int len;
