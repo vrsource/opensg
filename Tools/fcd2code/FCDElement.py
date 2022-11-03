@@ -28,7 +28,7 @@ class FCDElement(object):
         if allowNew:
             self.m_fcdDict[key] = value;
         else:
-            if self.m_fcdDict.has_key(key):
+            if key in self.m_fcdDict:
                 self.m_fcdDict[key] = value;
             else:
                 self.m_log.warning("setFCD: Unknown key [%s]." % key);
@@ -56,8 +56,8 @@ class FCDElement(object):
     def has_key(self, key):
         """Returns if m_tmplDict contains <key>.
         """
-        return self.m_tmplDict.has_key(key);
-    
+        return key in self.m_tmplDict;
+
     def __getitem__(self, key):
         """Emulate a mapping type, same as getTmpl(key).
         """
@@ -191,13 +191,11 @@ class FCDElement(object):
     def _dumpValues(self, log):
         """Prints the contents of m_fcdDict and m_tmplDict to <log>
         """
-        sortFCDKeys = self._getFCDDict().keys();
-        sortFCDKeys.sort();
+        sortFCDKeys = sorted(self._getFCDDict().keys());
         for key in sortFCDKeys:
             log.info(key + " >" + str(self._getFCDDict()[key]) + "<");
-        
-        sortTmplKeys = self._getTmplDict().keys();
-        sortTmplKeys.sort();
+
+        sortTmplKeys = sorted(self._getTmplDict().keys());
         for key in sortTmplKeys:
             log.info("\t" + key + " >" + str(self._getTmplDict()[key]) + "<");
     

@@ -518,8 +518,8 @@ class Field(FCDElement):
 #                 typeInclude = "OSG";
 #             else:
 #                 typeInclude = "OpenSG/OSG";
-            
-#             if includeTable.has_key(TypeRawCaps):
+
+#             if TypeRawCaps in includeTable:
 #                 typeInclude = typeInclude + includeTable[TypeRawCaps] + "Fields.h"
 #             else:
 #                 typeInclude = typeInclude + TypeRawCaps + "Fields.h"
@@ -544,7 +544,7 @@ class Field(FCDElement):
 
         if self.getFCD("pod") == "(AUTO)":
 
-            if podTable.has_key(self.getFCD("type")) == True:
+            if self.getFCD("type") in podTable:
                 isPod = podTable[self.getFCD("type")]
             else:
                 isPod = False
@@ -562,7 +562,7 @@ class Field(FCDElement):
             self["ArgRef"]   = "&";
        
         if self.getFCD("defaultValue") != "":
-            if self["category"] == "pointer" and self["cardinality"] == "single": 
+            if self["category"] == "pointer" and self["cardinality"] == "single":
                 self["TypedDefault"] = self.getFCD("defaultValue");
             elif self["category"] == "pointer" and self["cardinality"] == "multi":
                 self["TypedDefault"] = "";
@@ -660,7 +660,7 @@ class Field(FCDElement):
                                                  self.getFCD("clearFieldAs")              != ""       );
             
         else:
-            print "Unknown pointer field acess mode ", self.getFCD("ptrFieldAccess")
+            print("Unknown pointer field acess mode ", self.getFCD("ptrFieldAccess"))
             sys.exit(1)
         
         if self["ptrFieldStandardAccess"]:
@@ -812,7 +812,7 @@ class Field(FCDElement):
             else:
                 fieldInclude = "OpenSG/OSG" + self.nsFilePrefix
 
-            if includeTable.has_key(TypeRawCaps):
+            if TypeRawCaps in includeTable:
                 fieldInclude = "\"" + fieldInclude + includeTable[TypeRawCaps] + "Fields.h" + "\""
             else:
                 fieldInclude = "\"" + fieldInclude + TypeRawCaps               + "Fields.h" + "\""
@@ -835,7 +835,7 @@ class Field(FCDElement):
                 (self.getFCD("typeHeader") == "(AUTO)")  ):
 
                 if self.getFieldContainer().isSystemComponent():
-                    typeInclude = "OSG" + self.nsFilePrefix; 
+                    typeInclude = "OSG" + self.nsFilePrefix;
                 else:
                     typeInclude = "OpenSG/OSG" + self.nsFilePrefix;
             

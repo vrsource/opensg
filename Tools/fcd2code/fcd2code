@@ -98,7 +98,7 @@ class FCDProcess:
             self.m_log.info("Setting rootPath \"%s\"", rootPath);
         
         if rootPath == "":
-            if os.environ.has_key("OSG_ROOT"):
+            if "OSG_ROOT" in os.environ:
                 rootPath = os.environ["OSG_ROOT"];
             else:
                 rootPath = os.getcwd();
