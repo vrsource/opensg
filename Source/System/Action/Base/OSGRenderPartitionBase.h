@@ -163,6 +163,9 @@ class OSG_SYSTEM_DLLMAPPING RenderPartitionBase : public DrawTask
     bool getCorrectNegScale(void     ) const;
     void setCorrectNegScale(bool bVal);
 
+    bool getReactivateTarget(void) const;
+    void setReactivateTarget(bool bVal);
+
     bool getZWriteTrans    (void     ) const;
     void setZWriteTrans    (bool bVal);
 
@@ -196,6 +199,7 @@ class OSG_SYSTEM_DLLMAPPING RenderPartitionBase : public DrawTask
     bool     _bSortTrans;
     bool     _bZWriteTrans;
     bool     _bCorrectNegScale;
+    bool     _bReactivateTarget;
     UInt8    _ubState;
 
     // Stat

@@ -99,6 +99,7 @@ RenderPartitionBase::RenderPartitionBase(void) :
     _bSortTrans        (true ),
     _bZWriteTrans      (false),
     _bCorrectNegScale  (false),
+    _bReactivateTarget (false),
     _ubState           ( Full),
     _uiNumMatrixChanges(    0)
 {

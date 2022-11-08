@@ -102,6 +102,18 @@ void RenderPartitionBase::setCorrectNegScale(bool bVal)
 }
 
 inline
+bool RenderPartitionBase::getReactivateTarget(void) const
+{
+    return _bReactivateTarget;
+}
+
+inline
+void RenderPartitionBase::setReactivateTarget(bool bVal)
+{
+    _bReactivateTarget = bVal;
+}
+
+inline
 bool RenderPartitionBase::getZWriteTrans(void) const
 {
     return _bZWriteTrans;

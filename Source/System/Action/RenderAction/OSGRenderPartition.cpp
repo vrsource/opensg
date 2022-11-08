@@ -1133,6 +1133,11 @@ void RenderPartition::doExecution(bool bRestoreViewport)
     }
 #endif
 
+    if(_bReactivateTarget && _pRenderTarget != NULL)
+    {
+        _pRenderTarget->activate(&_oDrawEnv, _eDrawBuffer);
+    }
+
     StatCollector *pStatColl = _oDrawEnv.getStatCollector();
 
     if(_eMode == SimpleCallback)
